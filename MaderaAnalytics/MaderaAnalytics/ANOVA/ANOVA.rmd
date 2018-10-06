@@ -1,0 +1,164 @@
+---
+title: ""
+output: 
+    html_document:
+        smart: false
+---
+
+
+In many statistical analysis Anova is the prefer method of statistical analysis which we are testing the difference between one variable factor levels.  There are three commonly used of Anova Method. 
+<ul> 
+    <li>One Way Anova </li>
+	<li>Two Way Anova</li>
+	<li>N Way Anova</li>
+</ul>
+	
+One way Anova is a hypothesis testing methodology that is used to test hypothesis on variance of a giving population.   The test is normally performed on the factor level of a variable against the independent variable.    For example a data set with two variables one variable contains the factor level such as male and female, and the independent variable is the variable that contains a continuous variable such as salary.   
+
+One way Anova is based on the following assumptions: 
+<ul> 
+    <li>Normal distribution of the population from which the samples are drawn.</li>
+	<li>Measurement of the dependent variable is at interval or ratio level.</li>
+    <li>Two or more than two categorical independent groups in an independent variable.</li>
+	<li>Independence of samples</li>
+	<li>Homogeneity of the variance of the population.</li>
+</ul>
+
+To begin exploring Analysis of Variance I will use the data found in the below website: 
+A full version of the dataset diet may be found online on the U. of Sheffield website https://www.sheffield.ac.uk/polopoly_fs/1.570199!/file/stcp-Rdataset-Diet.csv.
+
+After downloading the dataset, I have placed it in my datasources folder where I am going to source the data from.  
+
+TO be able to use it with R I have set this datasource folder as my working directory.  
+
+Lets begin the data analysis shall we.  
+
+First I will import two packages from R.  The dplyr and ggplot package.  
+
+```{r message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(kableExtra)
+
+```
+Lets Import the data set into R.
+
+```{r}
+
+df = read.csv("D:\\Emman\\Documents\\GitHub\\MaderaAnalytics\\MaderaAnalytics\\MaderaAnalytics\\DataSources\\diet.csv")
+
+kable(head(df), format='markdown')
+
+```
+
+Our first step is to clean the dataset and get this data set for ANOVA Analysis. 
+
+Lets view the structure of the data.  
+
+```{r}
+str(df)
+```
+
+Right of the bat we can see from the structure of the data that there are NULL values in the gender variable. 
+Also, the diet variable is the treatment variable. We need to convert both the gender vairable and diet variable as factors.   
+
+We will also replace the the null values with 1 in the Gender field. 
+
+```{r}
+
+df$Diet = factor(df$Diet)
+
+df$gender = ifelse(is.na(df$gender), 1, df$gender) %>% factor()
+
+str(df)
+
+```
+Now we will get the difference between initial weight and final weight.  This calulaiton will be the final weight in which we will run an ANOVA to determine which diet was the best diet. 
+
+```{r}
+df1 = df %>% select(-Person) %>% mutate(weightloss = pre.weight - weight6weeks)
+
+kable(head(df1), format = "markdown")
+
+```
+
+Lets visualize the relationship between weightloss and Diet in a boxplot. 
+
+```{r}
+
+ggplot(df1, aes(Diet, weightloss, fill = Diet)) +
+    geom_boxplot() +
+    geom_hline(yintercept = 0, color = "red") +
+    ggtitle("Exploring Relationship Diet vs Weightloss") +
+    theme_bw()
+
+```
+
+After visualizing where the mean of the weightloss fall using a boxplot we can see that for Diet 1 there are two outliers.  
+THis is fine there are not extreme observation as the data set is too small.  Visually we can see that diet 3 has the greatest mean between the groups.   
+
+<h4>Hypothesis</h4> 
+
+Four our hypothesis testing of this analysis of variance our: 
+
+<ul>
+    <li>H0: All groups have equal means.</li>
+    <li>Ha: Not all groups have equal means.</li> 
+</ul>  
+
+<h1>One Way Anova</h1>
+
+Lets use the aov() to compare the means between the groups.  We can also visualize the results using a post hoc test with the tukeyHSD() function.  
+
+Our formula for a one way anova is as follows: 
+
+formalula = Weightloss ~ Diet
+
+```{r}
+model = aov(weightloss ~ Diet, data = df1)
+
+summary(model)
+```
+
+Our result yield a F value of 6.17 and a P-value lower than our alpha level of 0.05 percent this tells us that there are variation between the means of the group of Diet.  
+We can conclude that the means of atleast one Diet group is defferent and reject the null hypothesis.  
+
+Since got the model we can access the residuals and plot the results to see the actual variations of the group. 
+
+```{r}
+df1$resid = model$residuals
+
+kable(head(df1), format="markdown")
+```
+
+Lets plot the residual on a boxplot to see the difference of means using the residuals. 
+
+```{r}
+ggplot(df1, aes(Diet, resid, fill = Diet)) +
+    geom_boxplot() +
+    geom_hline(yintercept = 0, color = "red") +
+    theme_bw()
+```
+
+Lets also 
+
+```{r}
+qqnorm(df1$resid)
+qqline(df1$resid, col = "red")
+```
+
+
+```{r}
+pairwise = TukeyHSD(model)
+pairwise
+plot(pairwise)
+```
+
+
+<h2>References: </h2> 
+
+Two-Way ANOVA Test in R - Easy Guides - Wiki - STHDA
+Two-Way ANOVA Test in R - Easy Guides - Wiki - STHDA. (2018). Sthda.com. Retrieved 6 October 2018, from http://www.sthda.com/english/wiki/two-way-anova-test-in-r
+
+Pasin, M. and profile, V.
+Pasin, M., & profile, V. (2014). Performing ANOVA Test in R: Results and Interpretation. Analyticsforfun.com. Retrieved 6 October 2018, from http://www.analyticsforfun.com/2014/06/performing-anova-test-in-r-results-and.html

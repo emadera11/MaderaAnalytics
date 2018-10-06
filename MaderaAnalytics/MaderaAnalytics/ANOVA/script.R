@@ -17,7 +17,7 @@ df1 = df %>% select(-Person) %>% mutate(weightloss = pre.weight - weight6weeks)
 
 head(df1)
 
-ggplot(df1, aes(Diet, weightloss)) + geom_boxplot()
+ggplot(df1, aes(Diet, weightloss, fill = Diet)) + geom_boxplot()
 
 anova = aov(weightloss ~ Diet, df1)
 
@@ -28,7 +28,7 @@ df1$resid = anova$residuals
 
 head(df1)
 
-ggplot(df1, aes(Diet, resid)) + geom_boxplot() + geom_hline(yintercept = 0, color="red")
+ggplot(df1, aes(Diet, resid, fill = Diet)) + geom_boxplot() + geom_hline(yintercept = 0, color="red")
 
 qqnorm(df1$resid)
 qqline(df1$resid, col="red")
