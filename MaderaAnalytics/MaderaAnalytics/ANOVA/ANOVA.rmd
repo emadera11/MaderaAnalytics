@@ -148,12 +148,17 @@ qqline(df1$resid, col = "red")
 ```
 
 
+From the Pairwise comparison below we can see that group 2-1 the mean for these group are not significantly different. 
+If we look the lower and upper bound group 2-1 includes zero Group 3-1 and 3-2 does shows that there are significant differences within the mean, since the p-values are less then alpha we can conclude that group 3-1 and 3-2 are significantly different.
 ```{r}
 pairwise = TukeyHSD(model)
 pairwise
 plot(pairwise)
 ```
+<h2>Conclusion:</h2>
 
+This one-way anova was used to determine which groups are stastically different by testing the hypothesis whether all groups means are equal.  
+The results of this anova analyst concluded that there is no vairation between group 1 and 2, but the difference lies between group 3 and 1 and 3 and 2.  We can conclude that group 3 yield a better weight loss.    
 
 <h2>References: </h2> 
 

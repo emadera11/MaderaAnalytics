@@ -1,0 +1,139 @@
+---
+title: ""
+output: html_document
+---
+
+The lung Capacity data contains a sample population of people that were sample male and female, and whether they are a somker or non smoker.  
+I will be peforming and analysis to determine which model will fit this data for predictions.  
+
+To begin our analysis lets load the necessary pacakges:   
+
+```{r message = FALSE}
+library(dplyr)
+library(ggplot2)
+library(rpart)
+library(rpart.plot)
+library(gridExtra)
+library(caret)
+library(tidyr)
+library(knitr)
+```
+
+We can now view imoport our data into R so we can begin our analysis.  
+
+```{r, echo=FALSE}
+df = read.table("D:\\Emman\\Documents\\GitHub\\MaderaAnalytics\\MaderaAnalytics\\MaderaAnalytics\\DataSources\\LungCapData.txt", header = TRUE)
+
+kable(head(df), format="markdown")
+```
+
+I am going to do something different here.   I am going to remove two columns one is the Ceaseran and the other one is the Age. 
+The reason why I am removing the age is because the min age of the data is 3 and max date is 19.  I am going to demonstrate how to do a ttest using this data to determine if the means between smoker and non smoker is the same. 
+
+```{r}
+str(df)
+
+df = df %>% select(-Caesarean, -Age)
+
+kable(head(df), format="markdown")
+```   
+
+Now that we have our variable of interest lets explain, LungCap and Height are intervals varibles.  Smoke and Gender are Ordinal
+
+<h2>Descriptive Statistics</h2> 
+
+
+From the table below we can see that the mean for height is: 64.836276, standard deviation for this height is: 7.202144 Variance is: 51.870878.  
+
+
+```{r}
+desc = df %>% select(LungCap, Height) %>% gather()
+
+kable(desc %>% group_by(key) %>% summarise(mean = mean(value),
+                                     std = sd(value),
+                                     min = min(value),
+                                     max = max(value),
+                                     var = var(value)) %>% data.frame(), format = "markdown") 
+
+```
+For the other two variables which are categorical lets create a cross tababulation and see their distribution. 
+
+As you can see female non smoker are 314 and male non smoker is 334.  Let's also assume that the data came from a normal distribution.    
+
+```{r}
+kable(table(df$Gender, df$Smoke), format = "markdown")
+```
+
+<h2>Data Visualization</h2>
+
+```{r}
+ggplot(df, aes(Height)) +
+    geom_histogram(bins = 10, fill = "blue", color = "black") +
+    ggtitle("Histogram for Height") +
+    theme_bw() +
+    theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+```{r}
+ggplot(df, aes(LungCap)) +
+    geom_histogram(bins = 10, fill = "red", color = "black") +
+    ggtitle("Histogram for Height") +
+    theme_bw() +
+    theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+```{r}
+
+ggplot(df, aes(Height, LungCap)) +
+    geom_point(aes(color = Smoke)) +
+    scale_colour_manual(values = c("#D4E157", "#9B59B6")) +
+    theme_bw()
+
+```
+
+<h2>Two Sample TTest</h2> 
+
+Per Lung.org the average lung capacity of humans despite of male or female is 6 litters.  We will pefrom a t.test() on the the entire population to see if the means between smoker and non smoker is equal. 
+
+Hypothesis: 
+
+H0 the means are equal between smoker and non smoker. 
+Ha the means are not equal between smoker and non smoker.  
+
+```{r}
+t.test(LungCap~Smoke, df, mu=6)
+
+```
+Per the t.test() above we do see that  our t statitic is -28.669 and our p-value is less than alpha.  Therefore we reject the null hypothesis and conclude that the mean lung capacity between smoker and non smoker are not equal.  
+
+Lets perform another test for mean of the of lung capicaty of non smoker for male and female 
+
+H0: means are equal for non smoke males and females 
+Ha: Means are not equal for non smoker males and females.  
+
+```{r}
+df1 = df %>%
+    filter(Smoke == "no") 
+
+t.test(LungCap~Gender, df1, mu=6)
+```
+Per the test above the t statistics is -32.7 and our p-value is less than alpha we can conclude that the mean between non smoker male and female are not equal.  
+
+Lets conduct another test male or female smoker and see if the means lung capacity is equal.   
+
+H0: LunCap means are equal for smoker 
+Ha Lung Cap means are not equal.  
+
+```{r}
+y = df %>% filter(Smoke =="yes")
+
+t.test(LungCap~Gender, y, mu= 6)
+```
+<h2>Conclusion</h2> 
+The Sample t.test() perform in this analysis found evidence in the data that the means between smoker and non smoker are statiscally significant.  We also perform a different t.test between the non smoker group male and female and found evidence that the means are statistically different. The same test was performed for the smoker group male and female and found that there are differences between the group male and female as well.  
+
+<h2>Reference</h2> 
+
+Making Sense of the Two-Sample T-Test. (2018). Isixsigma.com. Retrieved 14 October 2018, from https://www.isixsigma.com/tools-templates/hypothesis-testing/making-sense-two-sample-t-test/
